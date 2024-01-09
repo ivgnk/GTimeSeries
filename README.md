@@ -4,6 +4,8 @@ Time series analysis primarily of long-term gravimeter data
 - - -             
 https://github.com/topics/time-series                
 
+<details>
+   <summary>Other</summary>              
 ### Info
 https://github.com/khuyentran1401/Data-science          
 **https://github.com/rob-med/awesome-TS-anomaly-detection**       
@@ -36,3 +38,4 @@ https://github.com/RJT1990/pyflux
 
 #### Python Quant
 https://github.com/polakowo/vectorbt        
+</details>
