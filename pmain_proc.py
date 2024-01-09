@@ -13,6 +13,7 @@ import scipy
 from pinp_proc import *
 
 import pinp_struct
+import pprint as pp
 
 from pnumpy import *
 import math
@@ -26,12 +27,14 @@ from tkinter import messagebox as mb
 from ptkinter_menu_proc import *
 from dataclasses import dataclass
 from sklearn.linear_model import LinearRegression
+import inspect
 
 log_file_name: str
 gran = 0.001  # 0.001% изменения функции по абсолютной величине
 # для analyze_diff, порог для max_var/max_fun, возможные уровни срабатывания 1, 10, 20, 100, 400
 
-def get_data_ini2():
+def get_data_ini2()->(np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+                      np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray):
     (the_dict, the_arr) = pinp_struct.get_dat_struct(pinp_struct.curr_nstruct)
     grav_ = the_arr[:, 1]
     sd_ = the_arr[:, 2]
@@ -79,6 +82,20 @@ class DescrStat:
     # считаю с использованием t-распеределения
     min95_confid: float = None # минимальное значение 95% доверительного интервала для среднего
     max95_confid: float = None # минимальное значение 95% доверительного интервала для среднего
+
+DescrStat_lst:list[DescrStat]=[]
+
+def DescrStat_view_names(DescrStat_lst:list):
+    print(inspect.currentframe().f_code.co_name)
+    # print(f'{pmain_proc.DescrStat_lst=}')
+    print('\n Names')
+    for i, s in enumerate(DescrStat_lst):
+        print(i, ' -*- ', s.name)
+
+
+def DescrStat_lst_get_n_min_max(name:str): # ->(int, float, float)
+    for ds in DescrStat_lst:
+        print(ds.name)
 
 
 def calc_descr_stat(x, name='', is_view=False):
@@ -147,15 +164,19 @@ def calc_descr_stat(x, name='', is_view=False):
         print(s)
     return the_descr_stat, s
 
-def calc_stat():
+def calc_stat(is_view:bool=False):
+    global DescrStat_lst
     #   0      1     2       3       4      5      6      7     8         9    10     11
     #  grav_, sd_, tilt_x, tilt_y, temp_, tide_, dur_, rej_, date_time_, xn_, time_, date_
     datas = get_data_ini2()
     s1=''
+    DescrStat_lst =[]
     for i in range(len(full_grav_data_name)-1): # full_grav_data_name
-        print(i, full_grav_data_name[i],'   ',  type(datas[i]),'   ',datas[i].size)
+        if is_view: print(i, full_grav_data_name[i],'   ',  type(datas[i]),'   ',datas[i].size)
         (the_descr_stat, s) = calc_descr_stat(datas[i], full_grav_data_name[i], False)
+        DescrStat_lst.append(the_descr_stat)
         s1+=s
+    # print('DescrStat_lst'); pp.pp(DescrStat_lst)
     return s1
 
 def linear_trend(x,y, is_view=False)->(float, float, float, np.ndarray, np.ndarray):

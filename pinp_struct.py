@@ -159,11 +159,6 @@ def input_inf(fname, is_view=False) -> (bool, object):
                 s3 = part_lines[0].strip()
                 part_lines2 = s3.split(sep=' ', maxsplit=2)
                 curr_dict["fdat_name_"] = part_lines2[0]
-                # if len(part_lines2)==2: #
-                #     curr_dict["num_lines"] = part_lines2[1]
-                # else:
-                #     curr_dict["num_lines"] = 'all'
-#         print(f'{part_lines=}')
 
     # Запоминаем путь к файлу данных
         # https://python-scripts.com/pathlib

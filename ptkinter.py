@@ -40,9 +40,9 @@ import pfile
 import pfunct
 import pinp_proc
 import pinp_struct
-import pmain_proc
 import ptest_alg
 import json
+import pprint as pp
 
 import datetime
 from sklearn.linear_model import LinearRegression
@@ -371,7 +371,7 @@ class GTimeSeriesGUI(Frame):
 
             (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_inf_fw, view_inf_fh)
             self.dialog = CViewTxt(self.master, sf_vinf + '    ' + ffn, root_geometry_string(form_w_, form_h_, addx, addy))
-            self.dialog.go(s.encode('cp1251').decode('utf-8'))
+            self.dialog.go(s) # self.dialog.go(s.encode('cp1251').decode('utf-8'))
             f.close()
 
     def f_view_dat(self):
@@ -425,7 +425,8 @@ class GTimeSeriesGUI(Frame):
         return s
 
     def f_view_stat(self):
-        s:str = calc_stat()
+        s:str = pmain_proc.calc_stat()
+        print('stat')
         if (self.dict_struct["saved_in_json"] == 1) or (self.dict_struct['typeof_input'] > 0):
             pfile.write_to_file(s, create_stat_fn(self.dict_struct['full_fdat_name_']))
             (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_stat_fw, view_stat_fh)
@@ -505,8 +506,25 @@ class GTimeSeriesGUI(Frame):
             #              xn_: np.ndarray, dat1_: np.ndarray, dat2_: np.ndarray, dat1label: str, dat2label: str,
             #              xmin: float, xmax: float,
             #              dat1min: float, dat1max: float, dat2min: float, dat2max: float):
-            self.dialog = CViewGraph2(self.master, sf_vigraph_sd_grav, graph_name, root_geometry_string(form_w_, form_h_, addx, addy),
-                                      xn_, sd_, grav_,  'Время, мин', 'sd, мГал', 'Grav, мГал', 0, 63000, 0, 2, 6535, 6550)
+            if pmain_proc.DescrStat_lst == []:
+                s1 = calc_stat() # внутри вычисляется DescrStat_lst
+                # print('s1 = \n',s1)
+                DescrStat_view_names(pmain_proc.DescrStat_lst)
+                # DescrStat_lst_get_n_min_max(' ')
+            else:
+                DescrStat_lst_get_n_min_max(' ')
+            # 0  -*-  Отсчеты гравиметра, мГал
+            # 1  -*-  СтдОткл отсчетов,мГал
+            dat1lbl = pmain_proc.DescrStat_lst[0].name;  dat2lbl = pmain_proc.DescrStat_lst[1].name
+            xmax = pmain_proc.DescrStat_lst[0].n-1
+            print(f'{grav_.min()=}  {grav_.max()=}')
+            print(f'{sd_.min()=}  {sd_.max()=}')
+            self.dialog = CViewGraph2(self.master, sf_vigraph_sd_grav, graph_name, root_geometry_string(form_w_, form_h_, addx, addy), # addx, addy
+                                      xn_, grav_, sd_,   'Время, мин', 'Grav, мГал','sd, мГал',
+                                      0, xmax,
+                                      grav_.min(), grav_.max(),
+                                      sd_.min(), sd_.max(),line_width=1)
+            # print(' this = ')
             self.dialog.go()
 
     def file_exit_(self):
@@ -547,24 +565,6 @@ class GTimeSeriesGUI(Frame):
         mag_ = self.res_dict['mag_']
         fun_ = self.res_dict['fun_']
         return num, lat_, lon_, dep_, mag_, fun_
-
-    def c_view_main_res(self):
-        if self.res_list == []:
-            mb.showerror(s_error, ss_ccne)
-        else:
-            (num, lat_, lon_, dep_, mag_, fun_) = self.get_from_res_dict()
-            ini_lat_ = self.dict_struct['ini_lat']  # начальное приближение Lat
-            ini_lon_ = self.dict_struct['ini_lon']  # начальное приближение Lon
-            ini_dep_ = self.dict_struct['ini_dep']
-            ini_mag_ = self.dict_struct['ini_mag']
-            name_sq  = self.dict_struct['name_sq']
-            # print(name_sq)
-            str_info = pmain_proc.create_str_res(name_sq, ini_lat_, ini_lon_, ini_dep_, ini_mag_,
-                                                 num, lat_, lon_, dep_, mag_, fun_)
-
-            (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_res_fw, view_res_fh)
-            self.dialog = CViewTxt(self.master, sc_vres, root_geometry_string(form_w_, form_h_, addx, addy))
-            self.dialog.go(str_info)  # .encode('cp1251').decode('utf-8')
 
     def c_view_all_res(self):
         # Определяем есть ли файл
@@ -658,36 +658,6 @@ class GTimeSeriesGUI(Frame):
         return spec_list
 
 
-    def set_stage2_param(self, event):
-        new_dict = ptest_alg.create_2stage_dict(self.dict_struct, self.res_list, event.x)
-        new_dict['ini_mag'] = round(self.res_dict['mag_'], 5)
-        new_dict['ini_dep'] = round(self.res_dict['dep_'], 5)
-        # print(self.dict_struct['finf_name_'])
-        # print(new_dict['finf_name_'])
-        # view_par_fw
-        (form_w_, form_h_, addx, addy) = center_form_positioning(self.scr_w, self.scr_h, view_par2sti_fw, view_par2sti_fh)
-        self.dialog = CViewTxt(self.master, sc_nif, root_geometry_string(form_w_, form_h_, addx, addy), 'Times 14')
-        self.dialog.go('\n\n'+(new_dict['full_finf_name_']).center(len(new_dict['full_finf_name_'])+20))  # .encode('cp1251').decode('utf-8')
-        ptest_alg.write_inf2(new_dict)
-        #  print(new_dict['full_finf_name_'])
-
-    # ---- Подменю Тестирование
-    # def set_test_param1(self, event):
-    #     (lat_, lon_, ifact_, ini_lat, ini_lon, add_str) = ptest_alg.create_test1(curr_dat_dir=self.dn_current_dat_dir,
-    #                                                                              nequake=event.x, noise=event.y)
-    #     self.f_view_test_map_ini(lon_,  lat_,  ifact_, ini_lon, ini_lat, add_str)
-
-    # def set_test_param2(self, event):
-    #     (lat_, lon_, ifact_, ini_lat, ini_lon, add_str, self.dict_test_struct) = ptest_alg.create_test2(
-    #         curr_dat_dir=self.dn_current_dat_dir, nequake=event.x, noise=event.y,
-    #         name=pfile.gfn(self.dict_test_struct['finf_name_']), test_dict_=self.dict_test_struct, numpy_arr_=self.numpy_arr)
-    #     add_str = self.dict_test_struct['name_sq']
-    #     self.f_view_test_map_ini(lon_,  lat_,  ifact_, ini_lon, ini_lat, add_str)
-
-
-    def o_menufont(self):
-        pass
-
     def f_view_graph_res_all(self):
         if self.dict_struct['typeof_input'] != 1:
             mb.showerror(s_error, ss_fdni)
@@ -763,7 +733,6 @@ class GTimeSeriesGUI(Frame):
         # ---- Подменю Расчет
         calc_menu = Menu(tearoff=0)
         calc_menu.add_command(label="Гистограммы", command=self.c_hist_)
-        calc_menu.add_command(label=sc_vres, command=self.c_view_main_res)  # Просмотр выбранного результата минимизации
         calc_menu.add_separator()
         # calc_menu.add_command(label="Карта результатов", command=self.f_view_map_res)
         calc_menu.add_command(label=sc_gres+'               Ctrl-G', command=self.f_view_graph_res)  # График расчетной интенсивности
@@ -923,7 +892,8 @@ class CViewGraph2:
     def __init__(self, master, win_title: str, map_name: str, the_root_geometry_string: str,
                  xn_: np.ndarray, dat1_: np.ndarray, dat2_: np.ndarray, xlabel:str, dat1label:str, dat2label:str,
                  xmin:float, xmax:float,
-                 dat1min:float, dat1max:float, dat2min:float, dat2max:float):
+                 dat1min:float, dat1max:float,
+                 dat2min:float, dat2max:float,line_width=0.25):
         self.slave = Toplevel(master)
         self.slave.iconbitmap(ico_progr)
         self.slave.title(win_title)
@@ -945,12 +915,16 @@ class CViewGraph2:
         # https://www.geeksforgeeks.org/how-to-set-the-spacing-between-subplots-in-matplotlib-in-python/
         self.frame.fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.4, hspace=0.3)
 
-        # self.frame.fig.ylim(0,2)
+        # self.frame.a1.ylim(dat1min, dat1max)
         # Расстановка дат https://pythonru.com/biblioteki/pyplot-uroki
-        # ax1 = self.frame.fig.add_axes([0, 63000, 0, 2])
-        self.frame.a1.plot(xn_, dat1_, label=dat1label, linewidth=0.25)  # , 'o', ms=12, color="red"  ko  , linewidth= 3
-        self.frame.a1.set(xlim=(xmin,xmax), ylim=(dat1min, dat1max))
-        # self.frame.a.plot(xn_, sd_ ,label='sd, мГал', linewidth=0.25)  # , 'o', ms=12, color="red"  ko  , linewidth= 3
+        ax1 = self.frame.fig.add_axes([xmin,xmax, dat1min, dat1max])
+        self.frame.a1.plot(xn_, dat1_, label=dat1label, linewidth=line_width)  # , 'o', ms=12, color="red"  ko  , linewidth= 3
+        # self.frame.a1.set(xlim=(xmin,xmax), ylim=(dat1min, dat1max))
+        print('-inner-')
+        print(dat1_)
+        print(dat1min, dat1max)
+        print(dat2min, dat2max)
+        print(dat1label)
         self.frame.a1.set_title(map_name, fontsize=4, fontname='Times New Roman')
         self.frame.a1.set_xlabel(xlabel, fontsize=3)
         self.frame.a1.set_ylabel(dat1label, fontsize=4)
@@ -960,7 +934,7 @@ class CViewGraph2:
         self.frame.a1.tick_params(which='major', length=1, width=0.25)
 
         self.frame.a2 = self.frame.fig.add_subplot(212)
-        self.frame.a2.plot(xn_, dat2_, label=dat2label, linewidth=0.25)  # , 'o', ms=12, color="red"  ko  , linewidth= 3
+        self.frame.a2.plot(xn_, dat2_, label=dat2label, linewidth=line_width)  # , 'o', ms=12, color="red"  ko  , linewidth= 3
         self.frame.a2.set(xlim=(xmin,xmax), ylim=(dat2min, dat2max))
         self.frame.a2.set_xlabel(xlabel, fontsize=3)
         self.frame.a2.set_ylabel(dat2label, fontsize=4)

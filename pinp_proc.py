@@ -1,4 +1,5 @@
 # -------------------------------------------------------------------
+# -------------------------------------------------------------------
 # Ввод из данных с координатами и данными точек
 # xlsx - файла
 # txt - файла
@@ -149,8 +150,8 @@ def the_txt_importdat(txt_file_name: str,is_view: bool) -> object:
     numpy_arr = np.zeros((nrow1 - 1, ncol), dtype=object)  # первую строку заголовков не вводим
     for i in range(nrow1):
         if i != 0:
-            s = all_lines[i];            # print(s)
-            part_lines = s.split(maxsplit=ncol1);    # print_string(part_lines)
+            s = all_lines[i]            # print(s)
+            part_lines = s.split(maxsplit=ncol1)    # print_string(part_lines)
             numpy_arr[i - 1, 0] = float(part_lines[0])  # Lat
             numpy_arr[i - 1, 1] = float(part_lines[1])  # Lon
             numpy_arr[i - 1, 2] = float(part_lines[2])  # Alt
