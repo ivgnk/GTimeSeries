@@ -5,7 +5,8 @@ Time series analysis primarily of long-term gravimeter data
 https://github.com/topics/time-series                
 
 <details>
-   <summary>Other</summary>              
+   <summary>from topics/time-series </summary>              
+
 ### Info
 https://github.com/khuyentran1401/Data-science          
 **https://github.com/rob-med/awesome-TS-anomaly-detection**       
