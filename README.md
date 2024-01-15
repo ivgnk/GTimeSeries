@@ -52,14 +52,14 @@ https://github.com/Jeffalltogether/well_decline_curve_analysis
 https://github.com/jpgrana/bayesian-approach-predicting-well-production 
 https://github.com/kperry2215/automated_decline_curve_analysis_oil_and_gas_wells 
 https://github.com/lahmidiamoumen/well-prediction 
-https://github.com/locluong09/petroleum-production-prediction 
-https://github.com/locluong09/ReservoirSimulation - MATLAB 38.4% Python 32.8% Julia 22.6% C++ 6.1% 
-https://github.com/M71-max/ds-oil-production-prediction                       
-https://github.com/micheofire/Oil-production-forecast  
-https://github.com/qinchaoxu/Oil-production-prediction-using-LSTM-based-on-Keras
-https://github.com/yain22/SWM - R                 
+https://github.com/locluong09/petroleum-production-prediction                       
+https://github.com/locluong09/ReservoirSimulation - MATLAB 38.4% Python 32.8% Julia 22.6% C++ 6.1%                         
+https://github.com/M71-max/ds-oil-production-prediction                        
+https://github.com/micheofire/Oil-production-forecast                          
+https://github.com/qinchaoxu/Oil-production-prediction-using-LSTM-based-on-Keras                                
+https://github.com/yain22/SWM - R                     
 https://github.com/TithiHunka/Crude-oil-Prediction             
-https://github.com/Torroledo/oil_baseline_model - Jupyter Notebook 69.8% Fortran 30.2%              
+https://github.com/Torroledo/oil_baseline_model - Jupyter Notebook 69.8% Fortran 30.2%                            
 
 https://github.com/brendonhall/OK_production_data (Oklahoma) 
 
