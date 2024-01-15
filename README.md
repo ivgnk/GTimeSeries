@@ -46,9 +46,11 @@ https://github.com/search?q=oil+production&type=repositories
 
 https://github.com/16Bhavana/Oil-Production-Prediction                          
 https://github.com/ashrafalaghbari/GA-TCN-LSTM 
+https://github.com/ayush1202/NeuralNet - R               
 https://github.com/Daisy-Engineer/Oil_Rate_Predict 
 https://github.com/denyhui/VAR_in_OilProduction_Prediction             
 https://github.com/Jeffalltogether/well_decline_curve_analysis 
+**https://github.com/JesusE1509/Final-Project  - countries **              
 https://github.com/jpgrana/bayesian-approach-predicting-well-production 
 https://github.com/kperry2215/automated_decline_curve_analysis_oil_and_gas_wells 
 https://github.com/lahmidiamoumen/well-prediction 
