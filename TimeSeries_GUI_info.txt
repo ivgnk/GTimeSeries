@@ -1,0 +1,2 @@
+TimeSeries_GUI.py - вызвающий модуль, аналог функции main
+ptkinter.py - главный объект tkinter, меню
