@@ -1,3 +1,4 @@
+import inspect
 from dataclasses import dataclass
 import numpy as np
 import scipy
@@ -32,6 +33,25 @@ class DescrStat:
 
 DescrStat_lst:list[DescrStat]=[]
 
+def stat_after_transform(lvl:list, ini:np.ndarray,trf:list[np.ndarray]):
+    print('\nFunction', inspect.currentframe().f_code.co_name)
+
+    for i,dat in enumerate(lvl):
+           print(i,' level= ',dat)
+           print('ini ',len(ini[ini>dat]))
+           for j,datj in enumerate(trf):
+               print(j,' trf ', len(datj[datj > dat]))
+           print()
+
+def create_stddev_lines(n:int, theDescrStat:DescrStat)->(np.ndarray,np.ndarray, float, float, str, str):
+    mean_ = theDescrStat.mean_
+    std_vib = theDescrStat.std_vib
+    st3 = 3*std_vib
+    st6 = 6*std_vib
+    minl3 = np.ones(n)*(mean_ - st3); lblmin3 = 'mean-3std'
+    maxl3 = np.ones(n)*(mean_ + st3); lblmax3 = 'mean+3std'
+    maxl6 = np.ones(n)*(mean_+st6); lblmax6 = 'mean+6std'
+    return maxl3, maxl6, mean_+st3, mean_+st6, lblmax3, lblmax6
 
 def calc_descr_stat(x, name='', is_view=False):
     '''
