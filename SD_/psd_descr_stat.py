@@ -33,14 +33,14 @@ class DescrStat:
 
 DescrStat_lst:list[DescrStat]=[]
 
-def stat_after_transform(lvl:list, ini:np.ndarray,trf:list[np.ndarray]):
+def stat_after_transform(lvl:list, ini:np.ndarray,trf:list[np.ndarray],names:list):
     print('\nFunction', inspect.currentframe().f_code.co_name)
 
     for i,dat in enumerate(lvl):
            print(i,' level= ',dat)
            print('ini ',len(ini[ini>dat]))
            for j,datj in enumerate(trf):
-               print(j,' trf ', len(datj[datj > dat]))
+               print(j,' trf '+names[j], len(datj[datj > dat]))
            print()
 
 def create_stddev_lines(n:int, theDescrStat:DescrStat)->(np.ndarray,np.ndarray, float, float, str, str):

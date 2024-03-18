@@ -29,7 +29,7 @@ GraphCl_lst.append(GraphCl(lblmax6,znp,maxl6))
 window_size = 3; ma_arr3 = MA_equal_weight(ini_sd, window_size); GraphCl_lst.append(GraphCl('MA'+str(window_size),znp,ma_arr3))
 window_size = 7; ma_arr7 = MA_equal_weight(ini_sd, window_size); GraphCl_lst.append(GraphCl('MA'+str(window_size),znp,ma_arr7))
 
-stat_after_transform([mpstd3, mpstd6],ini_sd,[ma_arr3, ma_arr7])
+stat_after_transform([mpstd3, mpstd6],ini_sd,[ma_arr3, ma_arr7],[lblmax3, lblmax6])
 
 print(f'Параметры линии тренда \n  {np.min(gr2)=}   {np.max(gr2)=}  \n  {np.mean(gr2)=}   {np.median(gr2)=} \n')
 view_datetime_sd(GraphCl_lst)

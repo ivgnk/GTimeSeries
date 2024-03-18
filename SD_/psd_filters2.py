@@ -10,11 +10,12 @@ from random import *
 from math import *
 from copy import deepcopy
 import matplotlib.pyplot as plt
+from typing import Final, List
 # from astropy.modeling.models import *  # для задания гауссова распределения весов окна
 
 # Для фильтраций временных рядов
 SMA_all_w = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25]
-SMA_w: list = [3, 7, 13, 25, 51]  # SMA - Simple Moving  Average,  размер окон
+SMA_w: Final = [3, 7, 13, 25, 51]  # SMA - Simple Moving  Average,  размер окон
 
 def calc_triang_weights_for_1Dfilter(win_size:int)->np.ndarray:
     '''
@@ -79,8 +80,8 @@ def work_with_smoothing(x: np.ndarray, y: np.ndarray)->(int, int, np.ndarray, li
     (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter(num_flt, curr_flt, y, res, llst)
     # ---- (3) - усреднение c треугольными весами
     (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter_ww(num_flt, curr_flt, y, res, llst)
-    # ---- (4) - усреднение c гауссовыми весами
-
+    # ---- (4) - wiener1D_filter
+    (num_flt, curr_flt, res, llst) = prep_wiener1D_filter(num_flt, curr_flt, y, res, llst)
     # for i in range(curr_flt):  print(res[i])
     return num_flt, curr_flt, res, llst
 
@@ -130,6 +131,24 @@ def prep_my_moving_average1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, r
         curr_flt += 1
     llst += [npvar]
     return num_flt, curr_flt, res, llst
+
+def prep_wiener1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:list)->(int, int, np.ndarray, list):
+    '''
+    Усреднение без весов (равновесовым фильтром)
+    '''
+    num_flt += 1
+    npvar = len(SMA_w)# число подвариантов
+    for i in range(npvar):
+        win_len = SMA_w[i]
+        res[curr_flt, 0] = num_flt
+        res[curr_flt, 1] = 'wiener1D_filter'
+        res[curr_flt, 2] = i + 1
+        res[curr_flt, 3] = sc.signal.wiener(dat, win_len)
+        res[curr_flt, 4] = 'win ' + str(win_len)
+        curr_flt += 1
+    llst += [npvar]
+    return num_flt, curr_flt, res, llst
+
 
 def prep_my_moving_average1D_filter_ww(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:list)->(int, int, np.ndarray, list):
     '''
@@ -354,6 +373,6 @@ if __name__ == "__main__":
     #test_calc_triang_weights_for_filter1D()
     # test_numpy_average()
 
-    # !!!  test_filters(100)
+    test_filters(100) # Good, but 3 from 4 win
     # test_calc_lst_of_triang_weights() `````````
-    test_wiener_filter()
+    # test_wiener_filter() # Good
