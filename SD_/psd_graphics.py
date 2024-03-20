@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
 from typing import *
 
 @dataclass
@@ -13,12 +15,14 @@ class GraphCl:
 GraphCl_lstT: TypeAlias = list[GraphCl]
 GraphCl_lst:GraphCl_lstT=[]
 
+figsize_st=(15, 12) # для качественной вставки в презентацию
+
 def lens_for_4parts(n:int):
     return ((n // 2) // 2)*4
 
 def view_in_4parts(x1:np.ndarray, y1:np.ndarray, suptitle:str,ylabel:str):
     # показ по 4 частям
-    fig = plt.figure(figsize=(20, 10))
+    fig = plt.figure(figsize=figsize_st)
     plt.suptitle(suptitle, fontsize=16)
     llen = lens_for_4parts(len(x1))
     x = x1[0:llen]; y = y1[0:llen]
@@ -37,21 +41,38 @@ def view_in_4parts(x1:np.ndarray, y1:np.ndarray, suptitle:str,ylabel:str):
     # 50 оттенков matplotlib — The Master Plots (с полным кодом на Python)
     # https://habr.com/ru/articles/468295/ 
 
-def view_datetime_sd( dat:GraphCl_lstT )->None:
-    fig = plt.figure(figsize=(16, 8))
-    plt.title('Стандарное отклонение отсчетов, мГал', fontsize=16)
-    plt.xlabel('Отсчеты', fontsize=14) # 'Дата и время'
+def view_datetime_sd(dat:GraphCl_lstT, with_legend=False, with_parts=False,with_inset=False)->None:
+    # fig,ax = plt.figure(figsize=(16, 8))
+    fig, ax = plt.subplots(figsize=figsize_st)
+    plt.title('Стандартное отклонение отсчетов, мГал', fontsize=16)
+    plt.xlabel('Номер отсчета', fontsize=14) # 'Дата и время'
     plt.ylabel('St.dev., мГал', fontsize=14)
-    llen = len(dat)
+    llen = len(dat); mmax=-1e38
     for i in range(llen):
         plt.plot(dat[i].x, dat[i].y,label=dat[i].name )
-    plt.grid()
-    plt.legend()
-    # вставка самксимальными значениями
-    axes = fig.add_axes(rect=(0.20, 0.48, 0.28, 0.28))
-    axes.plot(dat[0].x[55843:55880],dat[0].y[55843:55880])
-    plt.grid(linestyle='dotted')
-    plt.show()
+        mi = np.max(dat[i].y); mmax= max(mmax,mi)
+    #  https://www.codecamp.ru/blog/matplotlib-rectangle/
 
-    # показ по 4 частям
-    view_in_4parts(dat[0].x, dat[0].y, suptitle='Стандарное отклонение отсчетов, мГал',ylabel='St.dev., мГал')
+    if with_inset:
+        ax.add_patch(Rectangle((55843, -0.05), 57, 2.5,
+                               edgecolor='yellow',
+                               facecolor='yellow',
+                               fill=False,
+                               lw=5))
+
+    plt.ylim(0, mmax*1.05)
+    plt.grid()
+    if with_legend: plt.legend()
+    if with_inset:
+        # вставка с максимальными значениями
+        axes = fig.add_axes(rect=(0.20, 0.48, 0.28, 0.28))
+        axes.plot(dat[0].x[55843:55880],dat[0].y[55843:55880])
+        plt.grid(linestyle='dotted')
+
+    plt.show()
+    if with_parts: view_datetime_sd_parts(dat)
+    # view_in_4parts(dat[0].x, dat[0].y, suptitle='Стандартное отклонение отсчетов, мГал',ylabel='St.dev., мГал')
+
+
+def view_datetime_sd_parts(dat:GraphCl_lstT)->None:
+    view_in_4parts(dat[0].x, dat[0].y, suptitle='Стандартное отклонение отсчетов, мГал',ylabel='St.dev., мГал')

@@ -11,11 +11,15 @@ from math import *
 from copy import deepcopy
 import matplotlib.pyplot as plt
 from typing import Final, List
+from pstring import *
 # from astropy.modeling.models import *  # для задания гауссова распределения весов окна
 
 # Для фильтраций временных рядов
 SMA_all_w = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25]
 SMA_w: Final = [3, 7, 13, 25, 51]  # SMA - Simple Moving  Average,  размер окон
+SMA_wt = tuple(SMA_w)
+
+figsize_st = (15, 12) # для качественной вставки в презентацию
 
 def calc_triang_weights_for_1Dfilter(win_size:int)->np.ndarray:
     '''
@@ -26,14 +30,14 @@ def calc_triang_weights_for_1Dfilter(win_size:int)->np.ndarray:
     half_win = win_size // 2
     frst_odd = 1
     for i in range(x.size):
-        if i <= half_win: # левая половина массива, включая центр
+        if i <= half_win:  # левая половина массива, включая центр
             x[i] = frst_odd
             frst_odd += 2
         else:
             x[i] = x[half_win-(i-half_win)]  # правая половина массива, без центра
     return x
 
-def norm_weights_for_1Dfilter(dat: np.ndarray)->np.ndarray:
+def norm_weights_for_1Dfilter(dat: np.ndarray) -> np.ndarray:
     '''
     Нормализация весов для 1D фильтра
     '''
@@ -48,7 +52,7 @@ def test_smoothing():
     y = np.array([random() for i in range(10)])
     res = work_with_smoothing(x, y)
 
-def work_with_smoothing(x: np.ndarray, y: np.ndarray)->(int, int, np.ndarray, list):
+def work_with_smoothing(x: np.ndarray, y: np.ndarray, with_edges=False)->(int, int, np.ndarray, list):
     '''
     Сглаживание различными фильтрами
     Return:
@@ -75,12 +79,13 @@ def work_with_smoothing(x: np.ndarray, y: np.ndarray)->(int, int, np.ndarray, li
     curr_flt = 0
     num_flt = 0
     llst =[]
+    # ---- (01) - усреднение равновесовое
+    (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter(num_flt, curr_flt, y, res, llst, with_edges)
+    # ---- (01) - усреднение c треугольными весами
+    (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter_ww(num_flt, curr_flt, y, res, llst, with_edges)
+    # ---- (O2) - https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter
     (num_flt, curr_flt, res, llst) = prep_savgol(num_flt, curr_flt, y, res, llst)
-    # ---- (2) - усреднение равновесовое
-    (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter(num_flt, curr_flt, y, res, llst)
-    # ---- (3) - усреднение c треугольными весами
-    (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter_ww(num_flt, curr_flt, y, res, llst)
-    # ---- (4) - wiener1D_filter
+    # ---- (03) - wiener1D_filter
     (num_flt, curr_flt, res, llst) = prep_wiener1D_filter(num_flt, curr_flt, y, res, llst)
     # for i in range(curr_flt):  print(res[i])
     return num_flt, curr_flt, res, llst
@@ -100,7 +105,7 @@ def prep_savgol(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:
         win_len = SMA_w[i]
         polyorder_ = get_poly_order_for_savgol(win_len)
         res[curr_flt, 0] = num_flt
-        res[curr_flt, 1] = 'savgol_filter'
+        res[curr_flt, 1] = 'Savitzky–Golay filter'
         res[curr_flt, 2] = i + 1
         if win_len >= dat.size:
             print(inspect.currentframe().f_code.co_name)
@@ -115,7 +120,8 @@ def prep_savgol(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:
     return num_flt, curr_flt, res, llst
 
 
-def prep_my_moving_average1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:list)->(int, int, np.ndarray, list):
+def prep_my_moving_average1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray,
+                                    llst:list, with_edges=False)->(int, int, np.ndarray, list):
     '''
     Усреднение без весов (равновесовым фильтром)
     '''
@@ -124,9 +130,9 @@ def prep_my_moving_average1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, r
     for i in range(npvar):
         win_len = SMA_w[i]
         res[curr_flt, 0] = num_flt
-        res[curr_flt, 1] = 'mma1D_filter'
+        res[curr_flt, 1] = 'Moving average'
         res[curr_flt, 2] = i + 1
-        res[curr_flt, 3] = my_moving_average1D(dat, window_size=win_len)
+        res[curr_flt, 3] = my_moving_average1D(dat, window_size=win_len, with_edges=with_edges)
         res[curr_flt, 4] = 'win ' + str(win_len)
         curr_flt += 1
     llst += [npvar]
@@ -141,7 +147,7 @@ def prep_wiener1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarr
     for i in range(npvar):
         win_len = SMA_w[i]
         res[curr_flt, 0] = num_flt
-        res[curr_flt, 1] = 'wiener1D_filter'
+        res[curr_flt, 1] = 'Wiener filter'
         res[curr_flt, 2] = i + 1
         res[curr_flt, 3] = sc.signal.wiener(dat, win_len)
         res[curr_flt, 4] = 'win ' + str(win_len)
@@ -150,7 +156,8 @@ def prep_wiener1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarr
     return num_flt, curr_flt, res, llst
 
 
-def prep_my_moving_average1D_filter_ww(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:list)->(int, int, np.ndarray, list):
+def prep_my_moving_average1D_filter_ww(num_flt:int, curr_flt:int, dat:np.ndarray,
+                                       res:np.ndarray, llst:list, with_edges=False)->(int, int, np.ndarray, list):
     '''
     Усреднение с весами (треугольным фильтром)
     '''
@@ -161,9 +168,9 @@ def prep_my_moving_average1D_filter_ww(num_flt:int, curr_flt:int, dat:np.ndarray
         wght = calc_triang_weights_for_1Dfilter(win_len)
         the_weights = norm_weights_for_1Dfilter(wght)
         res[curr_flt, 0] = num_flt
-        res[curr_flt, 1] = 'mma1D_filter_ww'
+        res[curr_flt, 1] = 'Moving average with weights (triangle)'
         res[curr_flt, 2] = i + 1
-        res[curr_flt, 3] = my_moving_average1D(dat, window_size=win_len, the_weights = the_weights)
+        res[curr_flt, 3] = my_moving_average1D(dat, window_size=win_len, the_weights = the_weights, with_edges=with_edges)
         res[curr_flt, 4] = 'win ' + str(win_len)
         curr_flt += 1
     llst += [npvar]
@@ -210,42 +217,62 @@ def test_suplotsize():
     for i in range(1,20):
         print(i,' ',get_suplotsize(i))
 
-def test_filters(len_filter=140):
+def test_filters(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_legend = True, with_edges=False):
+    seed(123)
     x = np.array([i for i in range(len_filter)])
     y = np.array([random()*10 for i in range(len_filter)])
 
     ########################################################
     # Это основная часть, все остальное - для визуализации
-    (num_flt, curr_flt, res, llst) = work_with_smoothing(x, y)
+    (num_flt, curr_flt, res, llst) = work_with_smoothing(x, y,with_edges)
     ########################################################
 
     # print(num_flt, curr_flt, llst)
     sp = get_suplotsize(num_flt)
-    plt.subplots( nrows = sp[0], ncols = sp[1], figsize=(15, 8))
+    plt.subplots( nrows = sp[0], ncols = sp[1], figsize=figsize_st) # для качественной вставки в презентацию
     currflt = 0
     for i in range(num_flt): # перебор по всем фильтрам
-        plt.subplot(sp[0],sp[1], i + 1)
-        plt.title(res[currflt,1])
-        plt.plot(x, y, label='ini', linewidth=5)
+        plt.subplot(sp[0],sp[1], i + 1) #  facecolor=(0.95, 0.95, 0.95)  ,  facecolor=(0.6, 0.6, 0.6)
+        # figure.add_subplot(1, 1, 1, axisbg='red')
+        plt.title(res[currflt,1],color= 'b')
+        plt.plot(x, y, label='ini', linewidth=4)
         for j in range(llst[i]): # перебор по всем подвариантам фильтров
             if res[currflt,4] != '':
-                # Пустая строка означает, что фильтр не рассчитался
-                plt.plot(x, res[currflt,3], label = res[currflt,1]+' '+res[currflt,4])
+                curr_s = res[currflt, 4]
+                chngd_s = remove_letters(curr_s)
+                curr_lenflt = int(chngd_s)
+                if curr_lenflt in len_flt_tpl:
+                    # Пустая строка означает, что фильтр не рассчитался
+                    plt.plot(x, res[currflt,3], label = res[currflt,1]+' '+res[currflt,4])
+                    plt.grid()
+                    plt.xlabel('Номер отсчета', fontsize=9)
             currflt += 1
             # https://jenyay.net/Matplotlib/LegendPosition
-            plt.legend(loc = 'lower center', prop={'size': 8}) #  'lower right'  'best'
+            if with_legend: plt.legend(loc = 'lower center', prop={'size': 8}) #  'lower right'  'best'
     plt.show()
 
-def my_moving_average1D(dat:np.ndarray, window_size:int, the_weights = None)->np.ndarray:
+def create_edges(dat:np.ndarray, half_win:int)->np.ndarray:
+    left_edg = dat[0];            right_edg = dat[-1]
+    larr = [left_edg]*half_win;   rarr = [right_edg]*half_win
+    b1 = np.hstack((larr, dat, rarr))
+    return b1
+
+def restore_edges(dat:np.ndarray, half_win:int)->np.ndarray:
+    old_r_edg = len(dat)-half_win
+    k,l,m = np.hsplit(dat, [half_win, old_r_edg])
+    return l
+
+def my_moving_average1D(dat:np.ndarray, window_size:int, the_weights = None, with_edges=False)->np.ndarray:
     # print(inspect.currentframe().f_code.co_name)
     # Скользящее среднее 1 мерного массива
     # края оставляем как есть
     # веса в окне равные
     # окно только нечетной длины
     # не проверяем длину массива и окна
+    half_win = window_size // 2
+    if with_edges: dat =create_edges(dat, half_win)
     moving_avg = deepcopy(dat)
     llen = dat.size
-    half_win = window_size // 2
     ffirst = half_win
     llast = llen - ffirst
     # Проходим по нужным элементам в массиве, края уже заполнены deepcopy
@@ -253,6 +280,7 @@ def my_moving_average1D(dat:np.ndarray, window_size:int, the_weights = None)->np
         # Добавляем текущий элемент к скользящему среднему
         win_dat = dat[i-half_win:i+half_win+1]
         moving_avg[i] = np.average(win_dat, weights=the_weights)
+    if with_edges: moving_avg =restore_edges(moving_avg, half_win)
     return moving_avg
 
 
@@ -373,6 +401,6 @@ if __name__ == "__main__":
     #test_calc_triang_weights_for_filter1D()
     # test_numpy_average()
 
-    test_filters(100) # Good, but 3 from 4 win
+    test_filters(140,len_flt_tpl=(13,),with_legend=False, with_edges=bool(1)) # Good
     # test_calc_lst_of_triang_weights() `````````
     # test_wiener_filter() # Good
