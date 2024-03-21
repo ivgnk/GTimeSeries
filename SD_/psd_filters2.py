@@ -21,6 +21,11 @@ SMA_wt = tuple(SMA_w)
 
 figsize_st = (15, 12) # для качественной вставки в презентацию
 
+# Фильтр Баттерворта
+def prep_butterworth_filter():
+    pass
+
+
 def calc_triang_weights_for_1Dfilter(win_size:int)->np.ndarray:
     '''
     Расчет значений треугольной функции для фильтра
@@ -190,7 +195,7 @@ def get_poly_order_for_savgol(window_length: int)->int:
            res = 2
        return res
 
-def get_suplotsize(npictures:int)->tuple:
+def get_subplot_num(npictures:int)->tuple:
     '''
     Задает разбиение окна на части в зависимости от числа картинок
     '''
@@ -207,15 +212,40 @@ def get_suplotsize(npictures:int)->tuple:
         res = ((npictures // clmn), clmn)
     else:
         res = ((npictures // clmn) + 1, clmn)
-
     return res
 
-def test_suplotsize():
+def get_subplot_num2(npictures:int)->tuple:
+    '''
+    Задает разбиение окна на части в зависимости от числа картинок
+    '''
+    if npictures < 1:
+        print('Ошибка: Число subplot должно быть больше 0')
+        raise ValueError('Число subplot должно быть больше 0')
+    elif npictures >10:
+        print('Ошибка: Число subplot должно быть меньше 11')
+        raise ValueError('Число subplot должно быть меньше 11')
+
+    match npictures:
+        case 1: res = (1,1) # row col
+        case 2: res = (1,2)
+        case 3 | 4: res = (2, 2)
+        case 5 | 6: res = (2, 3)
+        case 7 | 8 | 9: res = (3, 3)
+        case 10: res = (2, 5)
+        case default: res=tuple()
+    return res
+
+def test_subplot_num():
     '''
     Проверка функции get_suplotsize
     '''
     for i in range(1,20):
-        print(i,' ',get_suplotsize(i))
+        print(i,' ', get_subplot_num(i))
+
+def test_subplot_num2():
+    for i in range(1,20):
+        print(i,' ', get_subplot_num2(i))
+
 
 def test_filters(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_legend = True, with_edges=False):
     seed(123)
@@ -228,7 +258,7 @@ def test_filters(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_legend = True, w
     ########################################################
 
     # print(num_flt, curr_flt, llst)
-    sp = get_suplotsize(num_flt)
+    sp = get_subplot_num(num_flt)
     plt.subplots( nrows = sp[0], ncols = sp[1], figsize=figsize_st) # для качественной вставки в презентацию
     currflt = 0
     for i in range(num_flt): # перебор по всем фильтрам
@@ -394,13 +424,13 @@ def test_wiener_filter():
     plt.show()
 
 if __name__ == "__main__":
-    # test_suplotsize()
+    test_subplot_num2()
     # test_get_win_fltr_lst()
     # test_medfilt_filter()
     # test_my_moving_average1D()
     #test_calc_triang_weights_for_filter1D()
     # test_numpy_average()
 
-    test_filters(140,len_flt_tpl=(13,),with_legend=False, with_edges=bool(1)) # Good
+    # test_filters(140,len_flt_tpl=(13,),with_legend=False, with_edges=bool(1)) # Good
     # test_calc_lst_of_triang_weights() `````````
     # test_wiener_filter() # Good

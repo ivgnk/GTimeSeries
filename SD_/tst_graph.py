@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def tst1():
+    print('start')
     xmin = -20.0
     xmax = 20.0
     count = 200
@@ -16,19 +17,20 @@ def tst1():
     # Вычислим значение функции в заданных точках
     y1 = np.sinc(x / np.pi)
     y2 = np.sinc(x / np.pi * 0.2)
+    with plt.ioff():
+        # !!! Создадим первое окно и нарисуем в нем график
+        plt.figure()
+        plt.plot(x, y1, label="f(x)")
+        # plt.show()
 
-    # !!! Создадим первое окно и нарисуем в нем график
-    plt.figure()
-    plt.plot(x, y1, label="f(x)")
-    plt.show()
+        # !!! Создадим второе окно и нарисуем график в нем
+        plt.figure()
+        plt.plot(x, y2, label="f(x * 0.2)")
+        plt.legend()
 
-    # !!! Создадим второе окно и нарисуем график в нем
-    plt.figure()
-    plt.plot(x, y2, label="f(x * 0.2)")
-    plt.legend()
-
-    # Покажем окна с нарисованными графиками
-    plt.show()
+        # Покажем окна с нарисованными графиками
+        plt.show()
+    print('end')
 
 
 if __name__ == "__main__":
