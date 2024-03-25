@@ -12,18 +12,18 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from typing import Final, List
 from pstring import *
+import pandas as pd
 # from astropy.modeling.models import *  # для задания гауссова распределения весов окна
 
 # Для фильтраций временных рядов
+SMA_filtname =['Moving average','Moving average with weights (triangle)','Savitzky–Golay filter','Wiener filter']
+SOS_filtname = ['Butterworth filter']
 SMA_all_w = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25]
 SMA_w: Final = [3, 7, 13, 25, 51]  # SMA - Simple Moving  Average,  размер окон
 SMA_wt = tuple(SMA_w)
 
 figsize_st = (15, 12) # для качественной вставки в презентацию
-
-# Фильтр Баттерворта
-def prep_butterworth_filter():
-    pass
+# figsize_st2 = (12, 10) # для качественной вставки в презентацию
 
 
 def calc_triang_weights_for_1Dfilter(win_size:int)->np.ndarray:
@@ -57,6 +57,35 @@ def test_smoothing():
     y = np.array([random() for i in range(10)])
     res = work_with_smoothing(x, y)
 
+
+def work_with_smoothing2(x: np.ndarray, y: np.ndarray, with_edges=False)->(int, int, np.ndarray, list):
+    '''
+    Сглаживание различными фильтрами
+    Return:
+    num_flt - всего вариантов
+    curr_flt - всего подвариантов
+    res - массив для визуализации с указанием варианта, подварианта, строкового названия, строковых параметров
+    llst - список подвариатов для каждого варианта
+    '''
+    n1 = 4 # берем с запасом, чтобы динамически не расширять
+    res = np.ndarray([n1, 5], dtype=object)
+    # первый столбец (0) - номер фильтра,
+    # второй столбец (1) - название фильтра
+    # третий столбец (2) - номер подварианта фильтра
+    # четвертый столбец (3) - результат фильтрации
+    # пятый столбец (4) - параметры фильрации
+    curr_flt = 0
+    num_flt = 0
+    llst =[]
+    # ---- (00) - усреднение равновесовое
+    (num_flt, curr_flt, res, llst) = prep_my_butter1D_filter(num_flt, curr_flt, y, res, llst, with_edges)
+    # # ---- (01) - усреднение c треугольными весами
+    # (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter_ww(num_flt, curr_flt, y, res, llst, with_edges)
+    # # ---- (O2) - sc.signal.savgol_filter     https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter
+    # (num_flt, curr_flt, res, llst) = prep_savgol(num_flt, curr_flt, y, res, llst)
+    # # ---- (03) - wiener1D_filter
+    # (num_flt, curr_flt, res, llst) = prep_wiener1D_filter(num_flt, curr_flt, y, res, llst)
+
 def work_with_smoothing(x: np.ndarray, y: np.ndarray, with_edges=False)->(int, int, np.ndarray, list):
     '''
     Сглаживание различными фильтрами
@@ -80,20 +109,29 @@ def work_with_smoothing(x: np.ndarray, y: np.ndarray, with_edges=False)->(int, i
     # пятый столбец (4) - параметры фильрации
     # print(inspect.currentframe().f_code.co_name)
 
-    # ---- (1) - sc.signal.savgol_filter
     curr_flt = 0
     num_flt = 0
     llst =[]
-    # ---- (01) - усреднение равновесовое
+    # ---- (00) - усреднение равновесовое
     (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter(num_flt, curr_flt, y, res, llst, with_edges)
     # ---- (01) - усреднение c треугольными весами
     (num_flt, curr_flt, res, llst) = prep_my_moving_average1D_filter_ww(num_flt, curr_flt, y, res, llst, with_edges)
-    # ---- (O2) - https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter
+    # ---- (O2) - sc.signal.savgol_filter     https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter
     (num_flt, curr_flt, res, llst) = prep_savgol(num_flt, curr_flt, y, res, llst)
     # ---- (03) - wiener1D_filter
     (num_flt, curr_flt, res, llst) = prep_wiener1D_filter(num_flt, curr_flt, y, res, llst)
+    # ---- (04) -
     # for i in range(curr_flt):  print(res[i])
     return num_flt, curr_flt, res, llst
+
+# Фильтр Баттерворта
+def prep_butter1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:list)->(int, int, np.ndarray, list):
+    '''
+    Образец tst_butterworth_filter2.py - > Python_Scipy_Filters
+    '''
+
+    return num_flt, curr_flt, res, llst
+
 
 # num_flt - число разных фильтров
 # curr_flt - общее число с подвариантами
@@ -110,7 +148,7 @@ def prep_savgol(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:
         win_len = SMA_w[i]
         polyorder_ = get_poly_order_for_savgol(win_len)
         res[curr_flt, 0] = num_flt
-        res[curr_flt, 1] = 'Savitzky–Golay filter'
+        res[curr_flt, 1] = SMA_filtname[2] # 'Savitzky–Golay filter'
         res[curr_flt, 2] = i + 1
         if win_len >= dat.size:
             print(inspect.currentframe().f_code.co_name)
@@ -120,6 +158,24 @@ def prep_savgol(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:
         else:
             res[curr_flt, 3] = sc.signal.savgol_filter(dat, window_length=win_len, polyorder=polyorder_)
             res[curr_flt, 4] = 'win ' + str(win_len)
+        curr_flt += 1
+    llst += [npvar]
+    return num_flt, curr_flt, res, llst
+
+def prep_my_butter1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray,
+                                    llst:list, with_edges=False)->(int, int, np.ndarray, list):
+    '''
+    Усреднение без весов (равновесовым фильтром)
+    '''
+    num_flt += 1
+    npvar = 1 # число подвариантов
+    for i in range(npvar):
+        win_len = SMA_w[i]
+        res[curr_flt, 0] = num_flt
+        res[curr_flt, 1] = SOS_filtname[0]  # 'Butterworth filter'
+        res[curr_flt, 2] = i + 1
+        res[curr_flt, 3] = my_moving_average1D(dat, window_size=win_len, with_edges=with_edges)
+        res[curr_flt, 4] = 'no win'
         curr_flt += 1
     llst += [npvar]
     return num_flt, curr_flt, res, llst
@@ -135,7 +191,7 @@ def prep_my_moving_average1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, r
     for i in range(npvar):
         win_len = SMA_w[i]
         res[curr_flt, 0] = num_flt
-        res[curr_flt, 1] = 'Moving average'
+        res[curr_flt, 1] = SMA_filtname[0]  #  'Moving average'
         res[curr_flt, 2] = i + 1
         res[curr_flt, 3] = my_moving_average1D(dat, window_size=win_len, with_edges=with_edges)
         res[curr_flt, 4] = 'win ' + str(win_len)
@@ -152,7 +208,7 @@ def prep_wiener1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarr
     for i in range(npvar):
         win_len = SMA_w[i]
         res[curr_flt, 0] = num_flt
-        res[curr_flt, 1] = 'Wiener filter'
+        res[curr_flt, 1] = SMA_filtname[3] # 'Wiener filter'
         res[curr_flt, 2] = i + 1
         res[curr_flt, 3] = sc.signal.wiener(dat, win_len)
         res[curr_flt, 4] = 'win ' + str(win_len)
@@ -173,7 +229,7 @@ def prep_my_moving_average1D_filter_ww(num_flt:int, curr_flt:int, dat:np.ndarray
         wght = calc_triang_weights_for_1Dfilter(win_len)
         the_weights = norm_weights_for_1Dfilter(wght)
         res[curr_flt, 0] = num_flt
-        res[curr_flt, 1] = 'Moving average with weights (triangle)'
+        res[curr_flt, 1] = SMA_filtname[1] # 'Moving average with weights (triangle)'
         res[curr_flt, 2] = i + 1
         res[curr_flt, 3] = my_moving_average1D(dat, window_size=win_len, the_weights = the_weights, with_edges=with_edges)
         res[curr_flt, 4] = 'win ' + str(win_len)
@@ -247,11 +303,53 @@ def test_subplot_num2():
         print(i,' ', get_subplot_num2(i))
 
 
-def test_filters(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_legend = True, with_edges=False):
+def create_signals(len_filter=140, the_test=False)->(np.ndarray, np.ndarray):
     seed(123)
-    x = np.array([i for i in range(len_filter)])
+    x = np.array([i for i in range(len_filter)])  # same as  x1 = np.linspace(0,len_filter,len_filter, endpoint=False)
     y = np.array([random()*10 for i in range(len_filter)])
+    if the_test:
+        x1 = np.linspace(0,len_filter,len_filter, endpoint=False)
+        x2 = np.linspace(0,len_filter,len_filter, endpoint=True)
+        x3 = np.linspace(0,len_filter,len_filter)
+        print(f'{len(x)=}  {len(x1)=}  {len(x2)=}  {len(x3)=}  {np.sum(x-x1)=}')
+        print(f'{x[len_filter-1]=}  {x1[len_filter-1]=}  {x2[len_filter-1]=}  {x3[len_filter-1]=}')
+        print(f'{x[1]=}  {x1[1]=}  {x2[1]=}  {x3[1]=}')
+    return x,y
 
+def tst_create_signals():
+    print('Function ',inspect.currentframe().f_code.co_name)
+    create_signals(len_filter=140, the_test=True)
+
+def test_filters_with_len_window2(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_legend = True, with_edges=False):
+    # print('Function = test_filters_with_len_window2')
+    # print(f'{len_filter=}')
+    x,y = create_signals(len_filter)
+    ########################################################
+    # Это основная часть, все остальное - для визуализации
+    (num_flt, curr_flt, res, llst) = work_with_smoothing(x, y,with_edges)
+    ########################################################
+    currflt = 0
+    res_corr_coeff=[]
+    for i in range(num_flt): # перебор по всем фильтрам
+        for j in range(llst[i]): # перебор по всем подвариантам фильтров
+            if res[currflt,4] != '':
+                curr_s = res[currflt, 4]
+                chngd_s = remove_letters(curr_s)
+                curr_lenflt = int(chngd_s)
+                if curr_lenflt in len_flt_tpl:
+                    # Пустая строка означает, что фильтр не рассчитался
+                    corr_coeff = np.corrcoef(y, res[currflt, 3])
+                    # https://www.codecamp.ru/blog/correlation-in-python/
+                    cc = corr_coeff[0, 1]
+                    # print(i, res[currflt, 1], '  corr_coeff=', cc)
+                    res_corr_coeff.append([len_filter,res[currflt, 1],cc])
+                currflt += 1
+    return res_corr_coeff
+
+def test_filters_with_len_window(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_legend = True, with_edges=False):
+    print('Function = ',inspect.currentframe().f_code.co_name)
+
+    x,y = create_signals(len_filter)
     ########################################################
     # Это основная часть, все остальное - для визуализации
     (num_flt, curr_flt, res, llst) = work_with_smoothing(x, y,with_edges)
@@ -274,12 +372,49 @@ def test_filters(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_legend = True, w
                 if curr_lenflt in len_flt_tpl:
                     # Пустая строка означает, что фильтр не рассчитался
                     plt.plot(x, res[currflt,3], label = res[currflt,1]+' '+res[currflt,4])
+                    corr_coeff = np.corrcoef(y, res[currflt,3])
+                    # https://www.codecamp.ru/blog/correlation-in-python/
+                    print(i, res[currflt, 1],'  corr_coeff=',corr_coeff[0,1])
                     plt.grid()
                     plt.xlabel('Номер отсчета', fontsize=9)
             currflt += 1
             # https://jenyay.net/Matplotlib/LegendPosition
             if with_legend: plt.legend(loc = 'lower center', prop={'size': 8}) #  'lower right'  'best'
     plt.show()
+
+def test_filters_with_sos(len_filter=140, with_legend=False, with_edges=bool(1)):
+    x,y = create_signals(len_filter)
+    ########################################################
+    # Это основная часть, все остальное - для визуализации
+    (num_flt, curr_flt, res, llst) = work_with_smoothing2(x, y,with_edges)
+    ########################################################
+
+    # print(num_flt, curr_flt, llst)
+    sp = get_subplot_num(num_flt)
+    # print(num_flt, curr_flt, llst)
+    sp = get_subplot_num(num_flt)
+    plt.subplots( nrows = sp[0], ncols = sp[1], figsize=figsize_st) # для качественной вставки в презентацию
+    currflt = 0
+    for i in range(num_flt): # перебор по всем фильтрам
+        plt.subplot(sp[0],sp[1], i + 1) #  facecolor=(0.95, 0.95, 0.95)  ,  facecolor=(0.6, 0.6, 0.6)
+        # figure.add_subplot(1, 1, 1, axisbg='red')
+        plt.title(res[currflt,1],color= 'b')
+        plt.plot(x, y, label='ini', linewidth=4)
+        for j in range(llst[i]): # перебор по всем подвариантам фильтров.
+            # Пока 1 подвариант
+            if res[currflt,4] != '':
+                    # Пустая строка означает, что фильтр не рассчитался
+                    plt.plot(x, res[currflt,3], label = res[currflt,1]) # +' '+res[currflt,4]
+                    corr_coeff = np.corrcoef(y, res[currflt,3])
+                    # https://www.codecamp.ru/blog/correlation-in-python/
+                    print(i, res[currflt, 1],'  corr_coeff=',corr_coeff[0,1])
+                    plt.grid()
+                    plt.xlabel('Номер отсчета', fontsize=9)
+            currflt += 1
+            # https://jenyay.net/Matplotlib/LegendPosition
+            if with_legend: plt.legend(loc = 'lower center', prop={'size': 8}) #  'lower right'  'best'
+    plt.show()
+
 
 def create_edges(dat:np.ndarray, half_win:int)->np.ndarray:
     left_edg = dat[0];            right_edg = dat[-1]
@@ -423,14 +558,48 @@ def test_wiener_filter():
     plt.legend()
     plt.show()
 
+def tst_test_filters_with_len_window2():
+    lst = list(range(100,6000,40))
+    lenlst = len(lst)
+    print(lst)
+    df = pd.DataFrame(columns=["Filter length", "Filter name", "Correlation coefficient"])
+    print(type(df))
+    for i,dat in enumerate(lst):
+        if i % 20 == 0: print(f'{i} / {lenlst}')
+        lst = test_filters_with_len_window2(len_filter=dat, len_flt_tpl=(13,), with_legend=False, with_edges=bool(1)) # Good
+        for dat2 in lst:
+            df.loc[len(df.index)] = dat2
+    work_with_stat_pd(df)
+    print('End of tst_test_filters_with_len_window2')
+
+def work_with_stat_pd(df):
+    print(f'{len(df)}')
+    plt.figure(figsize=(12, 8))
+    for i,fn_ in enumerate(SMA_filtname):
+        res1 = df.loc[df['Filter name'] == fn_]
+        # print(f'{i=}  {len(res1)}')
+        # print(res1)
+        plt.plot(res1['Filter length'], res1['Correlation coefficient'], label = fn_)
+    plt.xlabel('Длина выборки', fontsize=12) #
+    plt.ylabel('Коэффициент корреляции', fontsize=12)
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+
+
 if __name__ == "__main__":
-    test_subplot_num2()
+    # test_subplot_num2()
     # test_get_win_fltr_lst()
     # test_medfilt_filter()
     # test_my_moving_average1D()
     #test_calc_triang_weights_for_filter1D()
-    # test_numpy_average()
 
-    # test_filters(140,len_flt_tpl=(13,),with_legend=False, with_edges=bool(1)) # Good
-    # test_calc_lst_of_triang_weights() `````````
+    # tst_test_filters_with_len_window2()
+    # test_filters_with_len_window(140, len_flt_tpl=(13,), with_legend=False, with_edges=bool(1)) #
+
+    test_filters_with_sos(len_filter=140, with_legend=False, with_edges=bool(1))
+    # test_calc_lst_of_triang_weights()
     # test_wiener_filter() # Good
+
+    # tst_create_signals()

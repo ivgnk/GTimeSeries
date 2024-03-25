@@ -148,6 +148,8 @@ def create_signal()->(np.ndarray, np.ndarray):
 
 def test_Python_Scipy_Filters():
     for s in flt_func_name: print(s);
+    #  flt_func = [butter, bessel, cheby1, cheby2, ellip]  # , cheby2
+    #     i          0        1      2       3       4
     print('-----------')
     with plt.ioff():
         t_duration, signal_ = create_signal()
