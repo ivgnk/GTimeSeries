@@ -67,7 +67,7 @@ def work_with_smoothing2(x: np.ndarray, y: np.ndarray, with_edges=False)->(int, 
     res - массив для визуализации с указанием варианта, подварианта, строкового названия, строковых параметров
     llst - список подвариатов для каждого варианта
     '''
-    n1 = 4 # берем с запасом, чтобы динамически не расширять
+    n1 = 200 # берем с запасом, чтобы динамически не расширять
     res = np.ndarray([n1, 5], dtype=object)
     # первый столбец (0) - номер фильтра,
     # второй столбец (1) - название фильтра
@@ -85,6 +85,7 @@ def work_with_smoothing2(x: np.ndarray, y: np.ndarray, with_edges=False)->(int, 
     # (num_flt, curr_flt, res, llst) = prep_savgol(num_flt, curr_flt, y, res, llst)
     # # ---- (03) - wiener1D_filter
     # (num_flt, curr_flt, res, llst) = prep_wiener1D_filter(num_flt, curr_flt, y, res, llst)
+    return num_flt, curr_flt, res, llst
 
 def work_with_smoothing(x: np.ndarray, y: np.ndarray, with_edges=False)->(int, int, np.ndarray, list):
     '''
@@ -174,7 +175,10 @@ def prep_my_butter1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.nd
         res[curr_flt, 0] = num_flt
         res[curr_flt, 1] = SOS_filtname[0]  # 'Butterworth filter'
         res[curr_flt, 2] = i + 1
-        res[curr_flt, 3] = my_moving_average1D(dat, window_size=win_len, with_edges=with_edges)
+        #  prep_butter1D_filter(num_flt:int, curr_flt:int, dat:np.ndarray, res:np.ndarray, llst:list)->(int, int, np.ndarray, list):
+        # !!!!
+        # res[curr_flt, 3] = prep_butter1D_filter(num_flt, curr_flt, dat, res, llst) #->(int, int, np.ndarray, list):
+         # my_moving_average1D(dat, window_size=win_len, with_edges=with_edges))
         res[curr_flt, 4] = 'no win'
         curr_flt += 1
     llst += [npvar]
