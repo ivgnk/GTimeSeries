@@ -19,12 +19,13 @@ import pandas as pd
 
 from scipy import signal
 from scipy.signal import butter, bessel, cheby1, cheby2, ellip
-
+# from numba import njit
 
 
 # Для фильтраций временных рядов
 SMA_filtname =['Moving average','Moving average with weights (triangle)','Savitzky–Golay filter','Wiener filter']
 SOS_filtname = ['Butterworth filter','Bessel filter']
+ln_style_st = ['solid','solid','solid','solid']
 ln_style = ['solid','dashed','dotted','dashdot']
 SMA_all_w = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25]
 SMA_w: Final = [3, 7, 13, 25, 51]  # SMA - Simple Moving  Average,  размер окон
@@ -33,6 +34,9 @@ SMA_wt = tuple(SMA_w)
 figsize_st = (15, 12) # для качественной вставки в презентацию
 # figsize_st2 = (12, 10) # для качественной вставки в презентацию
 
+
+def remove_letters(s)->str:
+    return ''.join(filter(str.isdigit, s))
 
 def calc_triang_weights_for_1Dfilter(win_size:int)->np.ndarray:
     '''
@@ -383,6 +387,11 @@ def create_signals(len_filter=140, the_test=False)->(np.ndarray, np.ndarray):
         print(f'{len(x)=}  {len(x1)=}  {len(x2)=}  {len(x3)=}  {np.sum(x-x1)=}')
         print(f'{x[len_filter-1]=}  {x1[len_filter-1]=}  {x2[len_filter-1]=}  {x3[len_filter-1]=}')
         print(f'{x[1]=}  {x1[1]=}  {x2[1]=}  {x3[1]=}')
+
+        # print('len(x)=',len(x),'  len(x1)=',len(x1),'  len(x2)=',len(x2), '  len(x3)=',len(x3),' np.sum(x-x1)=',np.sum(x-x1))
+        # print('x[len_filter-1]=  x1[len_filter-1]=  x2[len_filter-1]=  x3[len_filter-1]=', x[len_filter-1],x1[len_filter-1], x2[len_filter-1], x3[len_filter-1])
+        # print('x[1]=  x1[1]=  x2[1]=  x3[1]=',x[1],x1[1],x2[1],x3[1])
+
     return x,y
 
 def tst_create_signals():
@@ -403,7 +412,7 @@ def test_filters_with_sos2(len_filter=140, with_legend=False, with_edges=bool(1)
         for j in range(llst[i]): # перебор по всем подвариантам фильтров
             if res[currflt,4] != '':
                 curr_s = res[currflt, 4]
-                chngd_s = remove_letters(curr_s)
+                # chngd_s = remove_letters(curr_s)
                 # print(f'{i=} {chngd_s=}')
                 # print(f'{y=}')
                 # print(f'{res[currflt, 3]=}')
@@ -417,7 +426,7 @@ def test_filters_with_sos2(len_filter=140, with_legend=False, with_edges=bool(1)
     # print(f'Good return')
     return res_corr_coeff
 
-def test_filters_with_len_window2(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_legend = True, with_edges=False)->list:
+def test_filters_with_len_window2(len_filter:int=140, len_flt_tpl:tuple=SMA_wt, with_legend:bool = True, with_edges:bool=False)->list:
     # print('Function = test_filters_with_len_window2')
     # print(f'{len_filter=}')
     # print('Function ',inspect.currentframe().f_code.co_name)
@@ -439,8 +448,11 @@ def test_filters_with_len_window2(len_filter=140, len_flt_tpl:tuple=SMA_wt, with
                     corr_coeff = np.corrcoef(y, res[currflt, 3])
                     # https://www.codecamp.ru/blog/correlation-in-python/
                     cc = corr_coeff[0, 1]
-                    # print(i, res[currflt, 1], '  corr_coeff=', cc)
-                    res_corr_coeff.append([len_filter,res[currflt, 1],cc])
+
+                    corr_coeff2 = np.corrcoef(y, y-res[currflt, 3])
+                    cc2 = corr_coeff2[0, 1]
+
+                    res_corr_coeff.append([len_filter,res[currflt, 1],cc,cc2])
                 currflt += 1
     return res_corr_coeff
 
@@ -473,6 +485,32 @@ def test_filters_with_len_window(len_filter=140, len_flt_tpl:tuple=SMA_wt, with_
                     corr_coeff = np.corrcoef(y, res[currflt,3])
                     # https://www.codecamp.ru/blog/correlation-in-python/
                     print(i, res[currflt, 1],'  corr_coeff=',corr_coeff[0,1])
+                    plt.grid()
+                    plt.xlabel('Номер отсчета', fontsize=9)
+            currflt += 1
+            # https://jenyay.net/Matplotlib/LegendPosition
+            if with_legend: plt.legend(loc = 'lower center', prop={'size': 8}) #  'lower right'  'best'
+    plt.show()
+    # Обратные фильтры
+    print()
+    plt.subplots( nrows = sp[0], ncols = sp[1], figsize=figsize_st) # для качественной вставки в презентацию
+    currflt = 0
+    for i in range(num_flt): # перебор по всем фильтрам
+        plt.subplot(sp[0],sp[1], i + 1) #  facecolor=(0.95, 0.95, 0.95)  ,  facecolor=(0.6, 0.6, 0.6)
+        # figure.add_subplot(1, 1, 1, axisbg='red')
+        plt.title(res[currflt,1],color= 'b')
+        plt.plot(x, y, label='ini', linewidth=4)
+        for j in range(llst[i]): # перебор по всем подвариантам фильтров
+            if res[currflt,4] != '':
+                curr_s = res[currflt, 4]
+                chngd_s = remove_letters(curr_s)
+                curr_lenflt = int(chngd_s)
+                if curr_lenflt in len_flt_tpl:
+                    # Пустая строка означает, что фильтр не рассчитался
+                    plt.plot(x, y-res[currflt,3], label = res[currflt,1]+' '+res[currflt,4]+'_HF')
+                    corr_coeff = np.corrcoef(y, y-res[currflt,3])
+                    # https://www.codecamp.ru/blog/correlation-in-python/
+                    print(i, res[currflt, 1],'  corr_coeff_HF=',corr_coeff[0,1])
                     plt.grid()
                     plt.xlabel('Номер отсчета', fontsize=9)
             currflt += 1
@@ -666,7 +704,7 @@ def tst_test_filters_with_sos2():
         lst2 = test_filters_with_sos2(len_filter=dat, with_legend=False, with_edges=bool(1)) # Good
         for dat2 in lst2:
             df.loc[len(df.index)] = dat2
-    work_with_stat_pd(df,SOS_filtname)
+    workvisu_with_stat_pd(df, SOS_filtname)
     print('End of tst_test_filters_with_sos2')
 
 def tst_test_filters_with_len_window2():
@@ -674,24 +712,25 @@ def tst_test_filters_with_len_window2():
     lst = list(range(100,6000,40))
     lenlst = len(lst)
     print(lst)
-    df = pd.DataFrame(columns=["Filter length", "Filter name", "Correlation coefficient"])
+    df = pd.DataFrame(columns=["Filter length", "Filter name", "Correlation coefficient", "Correlation coefficient_obr"])
     print(type(df))
     for i,dat in enumerate(lst):
         if i % 20 == 0: print(f'{i} / {lenlst}')
         lst2 = test_filters_with_len_window2(len_filter=dat, len_flt_tpl=(13,), with_legend=False, with_edges=bool(1)) # Good
         for dat2 in lst2:
             df.loc[len(df.index)] = dat2
-    work_with_stat_pd(df,SMA_filtname)
+    workvisu_with_stat_pd(df, SMA_filtname)
     print('End of tst_test_filters_with_len_window2')
 
-def work_with_stat_pd(df,flt_names:list):
+def workvisu_with_stat_pd(df, flt_names:list,linestyle_=ln_style_st):
     print(f'{len(df)}')
     plt.figure(figsize=(12, 8))
     for i,fn_ in enumerate(flt_names):
         res1 = df.loc[df['Filter name'] == fn_]
         # print(f'{i=}  {len(res1)}')
         # print(res1)
-        plt.plot(res1['Filter length'], res1['Correlation coefficient'], label = fn_, linestyle=ln_style[i])
+        plt.plot(res1['Filter length'], res1['Correlation coefficient'], label = fn_, linestyle=linestyle_[i])
+        plt.plot(res1['Filter length'], res1['Correlation coefficient_obr'], label=fn_+'_obr', linestyle=ln_style[i])
     plt.xlabel('Длина выборки', fontsize=12) #
     plt.ylabel('Коэффициент корреляции', fontsize=12)
     plt.grid()
@@ -705,15 +744,16 @@ if __name__ == "__main__":
     # test_get_win_fltr_lst()
     # test_medfilt_filter()
     # test_my_moving_average1D()
-    #test_calc_triang_weights_for_filter1D()
+    # test_calc_triang_weights_for_filter1D()
 
     # tst_test_filters_with_len_window2()
 
-    tst_test_filters_with_sos2()
-    # test_filters_with_len_window(140, len_flt_tpl=(13,), with_legend=False, with_edges=bool(1)) #
+    # tst_test_filters_with_sos2()
+    test_filters_with_len_window(140, len_flt_tpl=(13,), with_legend=False, with_edges=bool(1)) #
 
     # test_filters_with_sos(len_filter=140, with_legend=False, with_edges=bool(1))
     # test_calc_lst_of_triang_weights()
     # test_wiener_filter() # Good
 
     # tst_create_signals()
+
