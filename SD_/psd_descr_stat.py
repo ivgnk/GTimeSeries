@@ -1,7 +1,12 @@
 import inspect
+import sys
 from dataclasses import dataclass
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy
+import scipy.stats as stats
+from psd_dat import *
 
 @dataclass
 class DescrStat:
@@ -33,15 +38,63 @@ class DescrStat:
 
 DescrStat_lst:list[DescrStat]=[]
 
-def stat_after_transform(lvl:list, ini:np.ndarray,trf:list[np.ndarray],names:list):
+
+def calc_coeff_corr(y:np.ndarray, y1:np.ndarray,annotation:str=''):
+    '''
+    Calculate the Pearson Correlation Coefficient in Python
+    https://datagy.io/python-pearson-correlation/
+    How to Calculate Pearson Correlation Coefficient in SciPy
+    '''
+    print('\nFunction',inspect.currentframe().f_code.co_name)
+    if annotation !='': print(annotation)
+    print(np.shape(y),np.shape(y1),' y1.max()=',y1.max())
+    r = stats.pearsonr(y,y1)
+    rl = list(r)
+    print('Коэффициент корреляции r=',r)
+    print('Коэффициент корреляции rl=',rl)
+    r2=rl[0]**2
+    print('Коэффициент детерминации r^2=',r2)
+    print('-----------------------')
+
+
+# stat_after_transform(lvl=[mpstd3, mpstd6],ini=ini_sd,trf=[ma_arr3, ma_arr7],names=[lblmax3, lblmax6])
+def stat_after_transform(lvl:list, ini:np.ndarray,trf:list[np.ndarray],names:list,x:np.ndarray):
     print('\nFunction', inspect.currentframe().f_code.co_name)
+    # plt.plot(x,ini,label='ini')
+
 
     for i,dat in enumerate(lvl):
-           print(i,' level= ',dat)
-           print('ini ',len(ini[ini>dat]))
+           print(i,f' level (mean+std*N)= ',dat)
+           print('ini above level = ',len(ini[ini>dat]))
            for j,datj in enumerate(trf):
-               print(j,' trf '+names[j], len(datj[datj > dat]))
-           print()
+               dd=datj[datj > dat]
+               namestr=f'{j} trf win {all_window_size[j]}  {names[j]}  {len(dd)=}'
+               # print(j,' trf win '+str(all_window_size[j])+' '+names[j], len(dd))
+               print(namestr)
+               if j>0:
+                   x2, y2 = extract_arr(x,ini, dat)
+                   # print_2_arr(x2,y2,'ini > dat')
+                   x2, y2 = extract_arr(x,datj,dat)
+                   # plt.plot(x2,y2,linestyle=main_stl_[j])
+                   # print_2_arr(x2,y2,namestr+f' > dat')
+    # plt.legend()
+    # plt.show()
+
+
+def print_2_arr(x,y,name):
+    print(name)
+    for i in range(len(x)):
+        print(i,x[i],y[i])
+    print('\n')
+
+def extract_arr(x:np.ndarray, y:np.ndarray, limit)->(np.ndarray,np.ndarray):
+    x1=[];y1=[]
+    for i in range(len(x)):
+        if y[i]>limit:
+            x1.append(x[i])
+            y1.append(y[i])
+    return np.array(x1), np.array(y1)
+
 
 def create_stddev_lines(n:int, theDescrStat:DescrStat)->(np.ndarray,np.ndarray, float, float, str, str):
     mean_ = theDescrStat.mean_

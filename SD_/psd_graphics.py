@@ -76,3 +76,4 @@ def view_datetime_sd(dat:GraphCl_lstT, with_legend=False, with_parts=False,with_
 
 def view_datetime_sd_parts(dat:GraphCl_lstT)->None:
     view_in_4parts(dat[0].x, dat[0].y, suptitle='Стандартное отклонение отсчетов, мГал',ylabel='St.dev., мГал')
+

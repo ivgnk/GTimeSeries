@@ -3,6 +3,7 @@ On the base of
 https://www.statsmodels.org/stable/regression.html
 '''
 import inspect
+import sys
 
 import statsmodels.api as sm
 import numpy as np
@@ -17,10 +18,12 @@ def proc_OLS(y:np.ndarray,x:np.ndarray): #  y - A 1-d endogenous response variab
     X = sm.add_constant(x)
     model = sm.OLS(y, X)
     results = model.fit()
-    # print(f'{results.params=}')
-    # print(f'{results.tvalues=}')
-    # print()
-    # # print(f'{results.t_test([1, 0])=}')
+    print(f'{results.params=}\n')
+    print('results.params')
+    print(results.params)
+    print(f'{results.tvalues=}')
+    print()
+    # print(results.t_test([1, 0]))
     return results.params
 
 def thetst_proc_OLS():
