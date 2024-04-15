@@ -12,6 +12,8 @@ email igenik@rambler.ru
 import inspect
 import numpy as np
 import scipy.stats as stats
+from scipy import signal
+from scipy.fft import fft, fftfreq, fftshift
 from scipy.stats import lognorm
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller
@@ -23,7 +25,84 @@ from pnumpy import *
 import sys
 
 
-ONLY_STATIONARITY: Final[bool] = bool(1)
+ONLY_STATIONARITY: Final[bool] = bool(0)
+
+def welch_periodogram_method(values: np.ndarray, x: np.ndarray):
+    """
+    Метод Уэлча
+    https://ru.wikipedia.org/wiki/Периодограмма
+    https://en.wikipedia.org/wiki/Welch%27s_method
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html
+    """
+    print('\nFunction', inspect.currentframe().f_code.co_name)
+
+    name='Периодограмма'
+    print(name)
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.periodogram.html#scipy.signal.periodogram
+    fs=1
+    f, Pxx_den = signal.periodogram(values, fs)
+    Pxx_den_real = abs(Pxx_den)
+    plt.semilogy(f, Pxx_den_real)
+    plt.xlabel('frequency [Hz]')
+    plt.ylabel('PSD [V**2/Hz]')
+    plt.grid();     plt.title(name)
+    plt.show()
+    print('-------------')
+
+    name='Метод Уэлча'
+    print(name)
+    fs=1
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html
+    f, Pxx_den = signal.welch(values, fs, 'flattop', 1024, scaling='spectrum') #  fs , nperseg=1024
+    Pxx_den_real=abs(Pxx_den) # мнимая часть равна машинному нулю
+    plt.semilogy(f, Pxx_den_real)
+    plt.xlabel('frequency [Hz]')
+    plt.ylabel('PSD [V**2/Hz]')
+    plt.grid();     plt.title(name)
+    plt.show()
+    print('-------------')
+
+    # tst_fft_scicpy_example()
+
+    name='scipy.fft.fft'
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.fft.html#scipy.fft.fft
+    print(name)
+    the_fft=fft(values)
+    the_freq=fftfreq(x.shape[-1])
+    sp = fftshift(the_fft)
+    freq = fftshift(the_freq)
+
+    plt.title(name)
+    plt.semilogy(freq, abs(sp),label='abs')
+    plt.xlim(-0.005,0.5)
+    plt.grid()
+    plt.show()
+
+
+def tst_fft_scicpy_example():
+    from scipy.fft import fft, fftfreq, fftshift
+    import matplotlib.pyplot as plt
+    t = np.arange(256)
+    the_fft=fft(np.sin(t))
+    the_freq=fftfreq(t.shape[-1])
+    sp = fftshift(the_fft)
+    freq = fftshift(the_freq)
+
+    plt.title('Without shift')
+    plt.plot(the_freq, the_fft.real,label='real')
+    plt.plot(the_freq, the_fft.imag,label='imag')
+    plt.plot(the_freq, abs(the_fft),label='abs')
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+    plt.title('With shift')
+    plt.plot(freq, sp.real,label='real')
+    plt.plot(freq, sp.imag,label='imag')
+    plt.plot(freq, abs(sp),label='abs')
+    plt.grid()
+    plt.legend()
+    plt.show()
 
 def Dickey_Fuller_test(values):
     """
@@ -118,6 +197,18 @@ def stationarity_test(values:np.ndarray, x:np.ndarray):
     # part-1
     # разделим эти данные на разные группы и вычислим среднее значение и
     # дисперсию для разных групп и проверим согласованность
+    print('\nFunction', inspect.currentframe().f_code.co_name)
+    # Энтропия не работает из-за характера выборки
+    # print('stats.entropy')
+    # v=values[0:499]
+    # min_val = np.min(v)
+    # max_val = np.max(v)
+    # scaled_data = (v - min_val) / (max_val - min_val)
+    # res=stats.entropy(scaled_data)
+    # print(res)
+    welch_periodogram_method(values,x)
+    sys.exit()
+
     N=3
     parts = int(len(values) / N)
     pparts=[np.zeros(2)]*N

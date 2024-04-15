@@ -11,12 +11,14 @@ from psd_linear_regression import *
 from psd_filters import *
 from psd_scedasticity import *
 from psd_time_series import *
+from psd_resampling import *
 
 # --(1)-- ввод и визуализация исходных данных
 lenx, znp, ini_sd  = create_dat()
 
 if ONLY_SCEDASTICITY: test_of_white(znp, ini_sd) # в конце выход из программы
 if ONLY_STATIONARITY: stationarity_test(ini_sd,znp)
+if ONLY_RESAMPLING: the_bootstrap(ini_sd)
 
 GraphCl_lst.append(GraphCl('St.dev.',znp,ini_sd))
 view_datetime_sd(GraphCl_lst,with_inset=True)
@@ -51,8 +53,9 @@ GraphCl_lst.append(GraphCl('Linear trend',znp,gr2))
 print(f'Параметры линии тренда \n  {np.min(gr2)=}   {np.max(gr2)=}  \n  {np.mean(gr2)=}   {np.median(gr2)=} \n')
 view_datetime_sd(GraphCl_lst,True)
 
+
 # scedasticity(znp,ini_sd,gr2)
-test_of_white(znp,ini_sd)
-spearman_rank_correlation(znp,ini_sd)
+# test_of_white(znp,ini_sd)
+# spearman_rank_correlation(znp,ini_sd)
 
 print('Normal shut down')
